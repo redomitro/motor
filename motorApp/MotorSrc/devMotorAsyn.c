@@ -400,7 +400,7 @@ static long init_record(struct motorRecord * pmr )
                       (void *)&pPvt->status);
     if (status != asynSuccess) {
         asynPrint(pasynUser, ASYN_TRACE_ERROR,
-                  "devMotorAsyn::init_record: %s pasynGenericPointer->read returned %s", 
+                  "devMotorAsyn::init_record: %s pasynGenericPointer->read returned %s\n", 
                   pmr->name, pasynUser->errorMessage);
     }
 
