@@ -24,6 +24,7 @@
 #define motorMoveVelString              "MOTOR_MOVE_VEL"
 #define motorHomeString                 "MOTOR_HOME"
 #define motorStopString                 "MOTOR_STOP_AXIS"
+#define motorActVelocityString          "MOTOR_ACT_VELOCITY"
 #define motorVelocityString             "MOTOR_VELOCITY"
 #define motorVelBaseString              "MOTOR_VEL_BASE"
 #define motorAccelString                "MOTOR_ACCEL"
@@ -100,6 +101,13 @@
 #define profilePositionsString          "PROFILE_POSITIONS"
 #define profileReadbacksString          "PROFILE_READBACKS"
 #define profileFollowingErrorsString    "PROFILE_FOLLOWING_ERRORS"
+
+/* These are the per-axis parameters for position compare output */
+#define PCOStartPositionString          "PCO_START_POSITION"
+#define PCOEndPositionString            "PCO_END_POSITION"
+#define PCOIncrementString              "PCO_INCREMENT"
+#define PCOPulseWidthString             "PCO_PULSE_WIDTH"
+#define PCOEnableString                 "PCO_ENABLE"
 
 /** The structure that is passed back to devMotorAsyn when the status changes. */
 typedef struct MotorStatus {
@@ -207,6 +215,7 @@ class epicsShareClass asynMotorController : public asynPortDriver {
   int motorHome_;
   int motorStop_;
   int motorVelocity_;
+  int motorActVelocity_;
   int motorVelBase_;
   int motorAccel_;
   int motorPosition_;
@@ -284,7 +293,13 @@ class epicsShareClass asynMotorController : public asynPortDriver {
   int profilePositions_;
   int profileReadbacks_;
   int profileFollowingErrors_;
-  #define LAST_MOTOR_PARAM profileFollowingErrors_
+  
+  // These are the per-axis parameters for position compare output
+  int PCOStartPosition_;
+  int PCOEndPosition_;
+  int PCOIncrement_;
+  int PCOPulseWidth_;
+  int PCOEnable_;
 
   int numAxes_;                 /**< Number of axes this controller supports */
   asynMotorAxis **pAxes_;       /**< Array of pointers to axis objects */
@@ -312,7 +327,6 @@ class epicsShareClass asynMotorController : public asynPortDriver {
 
   friend class asynMotorAxis;
 };
-#define NUM_MOTOR_DRIVER_PARAMS (&LAST_MOTOR_PARAM - &FIRST_MOTOR_PARAM + 1)
 
 #endif /* _cplusplus */
 #endif /* asynMotorController_H */

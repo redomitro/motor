@@ -288,7 +288,12 @@ asynStatus asynMotorAxis::setDoubleParam(int function, double value)
         statusChanged_ = 1;
         status_.encoderPosition = value;
     }
-  }  
+  } else if (function == pC_->motorActVelocity_) {
+    if (value != status_.velocity) {
+        statusChanged_ = 1;
+        status_.velocity = value;
+    }
+  }
   // Call the base class method
   return pC_->setDoubleParam(axisNo_, function, value);
 }   
@@ -437,6 +442,14 @@ asynStatus asynMotorAxis::readbackProfile()
   }
   status  = pC_->doCallbacksFloat64Array(profileReadbacks_,       numReadbacks, pC_->profileReadbacks_, axisNo_);
   status |= pC_->doCallbacksFloat64Array(profileFollowingErrors_, numReadbacks, pC_->profileFollowingErrors_, axisNo_);
+  return asynSuccess;
+}
+
+/** Function to enable or disable position compare output */
+asynStatus asynMotorAxis::enablePCO(bool enable)
+{
+  // static const char *functionName = "enablePCO";
+
   return asynSuccess;
 }
 

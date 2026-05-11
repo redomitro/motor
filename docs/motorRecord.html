@@ -213,6 +213,9 @@ below.
     <a href="#Fields_res">Motor-resolution fields:</a>
   </li>
   <li>
+    <a href="#Fields_init">Initialization fields:</a>
+  </li>
+  <li>
     <a href="#Fields_motion">Motion-related fields:</a>
   </li>
   <li>
@@ -1017,7 +1020,7 @@ below.
     </td>
   </tr>
   <tr>
-    <td><a href="#Fields_res">RSTM</a></td>
+    <td><a href="#Fields_init">RSTM</a></td>
     <td>R/W</td>
     <td>Restore Mode</td>
     <td>RECCHOICE</td>
@@ -1534,8 +1537,9 @@ below.
       </p>
 
       <p>
-      Currently, changes to motor-resolution fields have no effect on the values of 
-      limit fields (although they should).&nbsp;
+      Changes to motor-resolution fields change the values of
+      limit fields since commit 3b5c71c412fd46 from May 2022.
+      This is included in R7-3.&nbsp;
       </p>
 
       <p>
@@ -1629,6 +1633,53 @@ below.
     readback units to motor steps may not actually be constant.</td>
   </tr>
 
+  </tbody>
+</table>
+
+<hr>
+<table border="1" cellpadding="5" nosave="">
+  <caption>
+    <a name="Fields_init"></a> <h2>Initialization fields</h2>
+  </caption>
+  <tbody>
+  <tr valign="top">
+    <th>Name</th>
+    <th>Access</th>
+    <th>Prompt</th>
+    <th>Data type</th>
+    <th>Comments</th>
+  </tr>
+  <tr valign="top">
+    <td>RSTM</td>
+    <td>R/W</td>
+    <td>Restore Mode</td>
+    <td>RECCHOICE (0:"Never", 1:"Always", 2:"NearZero", 3:"Conditional")</td>
+    <td>
+      Controls whether the saved (autosave/restore) motor position (DVAL) is
+      written to the controller during IOC initialization. The default is
+      <b>NearZero</b>.
+      <ul>
+        <li><b>Never (0):</b> The controller's current position is always kept
+        at initialization; the saved position is never loaded into the
+        controller.</li>
+        <li><b>Always (1):</b> The saved position (DVAL) is always written to
+        the controller at initialization, regardless of the controller's current
+        position.</li>
+        <li><b>NearZero (2):</b> The saved position is written to the
+        controller only if the controller's reported position is near zero
+        (within RDBD) while the saved DVAL is significantly non-zero (&gt;
+        RDBD). This is equivalent to the pre-R6.10 behavior.</li>
+        <li><b>Conditional (3):</b> Same as NearZero, but additionally writes
+        the saved position when the motor is configured to use relative moves
+        (i.e., retries are enabled and UEIP or URIP is set). This corresponds
+        to the R6.10 behavior.</li>
+      </ul>
+      This field is particularly relevant when autosave/restore is used: it
+      resolves the ambiguity between trusting the controller's position versus
+      the saved position after an IOC restart. See also: RDBD, RTRY, UEIP,
+      URIP.
+    </td>
+  </tr>
   </tbody>
 </table>
 
@@ -1923,9 +1974,9 @@ below.
     <td>R/W</td>
     <td>Set Point Deadband (EGU)</td>
     <td>DOUBLE</td>
-    <td>Before the motor is commanded a move, a check is done if the move is to small.
-    It is to small when the distance is less the the step size defined in MRES.
-    When a bigger deadband is wanted than MRES, set the value into SPDB.
+    <td>Before the motor is commanded to move, a check is done to see if the move is
+    too small. It is too small when the distance is less than the step size defined in
+    MRES. When a bigger deadband is wanted than MRES, set the value of SPDB.
     </td>
   </tr>
    <tr valign="top">
@@ -2377,7 +2428,13 @@ below.
     motor stops, the VAL field will be set equal to the RBV field, and the DVAL 
     field will be set equal to the DRBV field.&nbsp; These fields can be set to 1, 
     but setting either field to 0 results in an error.&nbsp; The record sets HOM[F/R] 
-    to zero when the homing procedure is either completed or aborted.</td>
+    to zero when the homing procedure is either completed or aborted.
+    Note that modern controllers, depending on their firmware and configuration,
+    may do different things. Examples are home into the limit switch, move
+    into a limit switch, return and search for a home switch or other sequences.
+    Often HOMF and HOMR then yield the same functionality. 
+    And the controller may choose to do nothing, if a motor is not homable.
+</td>
   </tr>
   <tr valign="top">
     <td><br>
@@ -2820,8 +2877,10 @@ below.
     controller parameters as follows:
       <p>
       For the MM4000;&nbsp; CKP = PCOF, CKI = ICOF and CKD = DCOF. <br>
-      For all OMS controllers;&nbsp; CKP = 1999.9 * PCOF, CKI = 1999.9 * ICOF, CKD = 
-      1999.9 * DCOF. 
+      For all OMS controllers except the MAXv;&nbsp; CKP = 1999.9 * PCOF, CKI = 1999.9 * ICOF, CKD = 
+      1999.9 * DCOF.<br>
+      For the OMS MAXv;&nbsp; CKP = 32767.0 * PCOF, CKI = 32767.0 * ICOF, CKD = 
+      32767.0 * DCOF.
       </p>
 
       <p>
@@ -2875,11 +2934,18 @@ below.
     <td>R/W</td>
     <td>Enable control</td>
     <td>RECCHOICE</td>
-    <td>(0:"Disable", 1:"Enable")&nbsp; Enable/Disable closed-loop position control.&nbsp; 
-    This field is active only if the GAIN_SUPPORT bit in the MSTA is true.&nbsp; 
-    This field is set by both the user and device support.&nbsp; CNEN is set to <i>Disable</i> 
-    by device support when it detects a motion controller error; e.g. maximum 
-    following error exceeded.</td>
+    <td>This field is active only if the GAIN_SUPPORT bit in the MSTA is true.
+     The function of this field is depending on the motion controller.
+     This field is set by both the user and device support.
+    <li>
+     Some (older?) controllers can switch between open- and closed-loop. (0: open loop, 1: closed loop)
+    </li>
+    <li>
+     Some controllers use this field to enable torque control
+    </li>
+    <li>
+     Most modern controllers  use this field to enable/disable the motor (amplifier/driver)
+    </li>
   </tr>
   <tr valign="top">
     <td>PCOF</td>
