@@ -13,6 +13,7 @@ SUBMODULES += motorAerotech
 SUBMODULES += motorAttocube
 SUBMODULES += motorDeltaTau
 SUBMODULES += motorFaulhaber
+SUBMODULES += motorFastech
 ifdef IPAC
 SUBMODULES += motorHytec
 endif
